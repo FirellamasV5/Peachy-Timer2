@@ -61,6 +61,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-analytics.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
       
         const firebaseConfig = {
@@ -70,11 +71,12 @@
           projectId: "peachytimer",
           storageBucket: "peachytimer.firebasestorage.app",
           messagingSenderId: "675892522112",
-          appId: "1:675892522112:web:109f318f9eb54bb96d4a65",
-          measurementId: "G-860JWY4C8J"
+          appId: "1:675892522112:web:62885f9de812be706d4a65",
+          measurementId: "G-9X8X91FM8Q"
         };
       
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
         const database = getDatabase(app);
         const timerRef = ref(database, 'timer');
       
@@ -108,13 +110,16 @@
         }
       
         function resetClock() {
-          elapsedSeconds = 0;
-          set(timerRef, 0);
-          displayTime(elapsedSeconds); // Fix: Update UI instantly after reset
-        }
-      
+    elapsedSeconds = 0;
+    set(timerRef, 0);
+    displayTime(elapsedSeconds);
+}
+
+// Make resetClock globally accessible
+window.resetClock = resetClock;
         startClock();
     </script>
 </body>
 </html>
+
 
