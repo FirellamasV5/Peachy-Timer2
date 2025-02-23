@@ -42,6 +42,7 @@
             cursor: pointer;
             border-radius: 5px;
             transition: 0.3s;
+            margin: 5px;
         }
         .reset-btn {
             background: #ff4c4c;
@@ -50,6 +51,13 @@
         .reset-btn:hover {
             background: #d43c3c;
         }
+        .pause-btn {
+            background: #ffa500;
+            color: white;
+        }
+        .pause-btn:hover {
+            background: #cc8400;
+        }
     </style>
 </head>
 <body>
@@ -57,66 +65,92 @@
         <div class="title">Peachy Sighting</div>
         <div class="clock" id="clock">00:00:00 - 00/00</div>
         <button class="reset-btn" onclick="resetClock()">Reset</button>
+        <button class="pause-btn" onclick="togglePause()" id="pauseBtn">Pause</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-analytics.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
-      
+        import { getDatabase, ref, set, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
+
         const firebaseConfig = {
-          apiKey: "AIzaSyCKQ2Q5-YGauNrHImCb1VSASoSHWyZJk2E",
-          authDomain: "peachytimer.firebaseapp.com",
-          databaseURL: "https://peachytimer-default-rtdb.asia-southeast1.firebasedatabase.app",
-          projectId: "peachytimer",
-          storageBucket: "peachytimer.firebasestorage.app",
-          messagingSenderId: "675892522112",
-          appId: "1:675892522112:web:62885f9de812be706d4a65",
-          measurementId: "G-9X8X91FM8Q"
+            apiKey: "AIzaSyCKQ2Q5-YGauNrHImCb1VSASoSHWyZJk2E",
+            authDomain: "peachytimer.firebaseapp.com",
+            databaseURL: "https://peachytimer-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "peachytimer",
+            storageBucket: "peachytimer.firebasestorage.app",
+            messagingSenderId: "675892522112",
+            appId: "1:675892522112:web:62885f9de812be706d4a65",
+            measurementId: "G-9X8X91FM8Q"
         };
-      
+
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const database = getDatabase(app);
         const timerRef = ref(database, 'timer');
-      
-        let elapsedSeconds = 0;
-        const clockDisplay = document.getElementById("clock");
-      
-        function updateClock() {
-          elapsedSeconds++;
-          set(timerRef, elapsedSeconds);
-          displayTime(elapsedSeconds);
-        }
-      
-        function displayTime(seconds) {
-          const hours = Math.floor(seconds / 3600).toString().padStart(2, '0');
-          const minutes = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-          const sec = (seconds % 60).toString().padStart(2, '0');
-          const days = Math.floor(seconds / 86400).toString().padStart(2, '0');
-          const months = Math.floor(days / 30).toString().padStart(2, '0');
-          clockDisplay.textContent = `${hours}:${minutes}:${sec} - ${days}/${months}`;
-        }
-      
-        onValue(timerRef, (snapshot) => {
-          if (snapshot.exists()) {
-            elapsedSeconds = snapshot.val();
-            displayTime(elapsedSeconds);
-          }
-        });
-      
-        function startClock() {
-          setInterval(updateClock, 1000);
-        }
-      
-        function resetClock() {
-    elapsedSeconds = 0;
-    set(timerRef, 0);
-    displayTime(elapsedSeconds);
-}
 
-// Make resetClock globally accessible
-window.resetClock = resetClock;
+        let elapsedSeconds = 0;
+        let startTime = Date.now() - elapsedSeconds * 1000;
+        const clockDisplay = document.getElementById("clock");
+        let timerStarted = false;
+        let isPaused = false;
+        let interval;
+
+        function updateClock() {
+            if (isPaused) return;
+
+            const now = Date.now();
+            elapsedSeconds = Math.floor((now - startTime) / 1000);
+            displayTime(elapsedSeconds);
+
+            if (elapsedSeconds % 5 === 0) {
+                set(timerRef, elapsedSeconds);
+            }
+        }
+
+        function displayTime(seconds) {
+            const hours = Math.floor(seconds / 3600).toString().padStart(2, '0');
+            const minutes = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+            const sec = (seconds % 60).toString().padStart(2, '0');
+            const days = Math.floor(seconds / 86400).toString().padStart(2, '0');
+            const months = Math.floor(days / 30).toString().padStart(2, '0');
+            clockDisplay.textContent = `${hours}:${minutes}:${sec} - ${days}/${months}`;
+        }
+
+        onValue(timerRef, (snapshot) => {
+            if (snapshot.exists()) {
+                let firebaseSeconds = snapshot.val();
+                if (Math.abs(firebaseSeconds - elapsedSeconds) > 1) {
+                    elapsedSeconds = firebaseSeconds;
+                    startTime = Date.now() - elapsedSeconds * 1000;
+                    displayTime(elapsedSeconds);
+                }
+            }
+        });
+
+        function startClock() {
+            if (!timerStarted) {
+                timerStarted = true;
+                interval = setInterval(updateClock, 1000);
+            }
+        }
+
+        function resetClock() {
+            runTransaction(timerRef, () => 0).then(() => {
+                elapsedSeconds = 0;
+                startTime = Date.now();
+                displayTime(elapsedSeconds);
+            });
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById("pauseBtn").textContent = isPaused ? "Resume" : "Pause";
+        }
+
+        window.resetClock = resetClock;
+        window.togglePause = togglePause;
+
         startClock();
     </script>
 </body>
