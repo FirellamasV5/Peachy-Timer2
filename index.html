@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incrementing Timer</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: url('Untitled348_20250128201012.png');
+            background-size: 75%;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            transition: background 0.3s;
+        }
+        .container {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .title {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .clock {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        .reset-btn {
+            background: #ff4c4c;
+            color: white;
+        }
+        .reset-btn:hover {
+            background: #d43c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">Peachy Sighting</div>
+        <div class="clock" id="clock">00:00:00 - 00/00</div>
+        <button class="reset-btn" onclick="resetClock()">Reset</button>
+    </div>
+
+    <script type="module">
+        // Import the functions you need from the SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
+      
+        // Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyCKQ2Q5-YGauNrHImCb1VSASoSHWyZJk2E",
+          authDomain: "peachytimer.firebaseapp.com",
+          databaseURL: "https://peachytimer-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "peachytimer",
+          storageBucket: "peachytimer.firebasestorage.app",
+          messagingSenderId: "675892522112",
+          appId: "1:675892522112:web:109f318f9eb54bb96d4a65",
+          measurementId: "G-860JWY4C8J"
+        };
+      
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const timerRef = ref(database, 'timer');
+      
+        let elapsedSeconds = 0;
+        const clockDisplay = document.getElementById("clock");
+      
+        function updateClock() {
+          elapsedSeconds++;
+          set(timerRef, elapsedSeconds); // Save time to Firebase
+          displayTime(elapsedSeconds);
+        }
+      
+        function displayTime(seconds) {
+          const hours = Math.floor(seconds / 3600).toString().padStart(2, '0');
+          const minutes = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+          const sec = (seconds % 60).toString().padStart(2, '0');
+          const days = Math.floor(seconds / 86400).toString().padStart(2, '0');
+          const months = Math.floor(days / 30).toString().padStart(2, '0');
+          clockDisplay.textContent = `${hours}:${minutes}:${sec} - ${days}/${months}`;
+        }
+      
+        // Listen for updates from Firebase
+        onValue(timerRef, (snapshot) => {
+          if (snapshot.exists()) {
+            elapsedSeconds = snapshot.val();
+            displayTime(elapsedSeconds);
+          }
+        });
+      
+        function startClock() {
+          setInterval(updateClock, 1000);
+        }
+      
+        function resetClock() {
+          elapsedSeconds = 0;
+          set(timerRef, 0); // Reset Firebase timer
+        }
+      
+        startClock();
+      </script>
+      
+</body>
+</html>
