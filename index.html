@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Incrementing Timer</title>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,7 +14,7 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-image: url('Untitled348_20250128201012.png');
+            background-image: url('./Untitled348_20250128201012.png'); /* Ensure correct relative path */
             background-size: 75%;
             background-position: center;
             background-repeat: no-repeat;
@@ -60,11 +60,9 @@
     </div>
 
     <script type="module">
-        // Import the functions you need from the SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
       
-        // Firebase configuration
         const firebaseConfig = {
           apiKey: "AIzaSyCKQ2Q5-YGauNrHImCb1VSASoSHWyZJk2E",
           authDomain: "peachytimer.firebaseapp.com",
@@ -76,7 +74,6 @@
           measurementId: "G-860JWY4C8J"
         };
       
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const timerRef = ref(database, 'timer');
@@ -86,7 +83,7 @@
       
         function updateClock() {
           elapsedSeconds++;
-          set(timerRef, elapsedSeconds); // Save time to Firebase
+          set(timerRef, elapsedSeconds);
           displayTime(elapsedSeconds);
         }
       
@@ -99,7 +96,6 @@
           clockDisplay.textContent = `${hours}:${minutes}:${sec} - ${days}/${months}`;
         }
       
-        // Listen for updates from Firebase
         onValue(timerRef, (snapshot) => {
           if (snapshot.exists()) {
             elapsedSeconds = snapshot.val();
@@ -113,11 +109,12 @@
       
         function resetClock() {
           elapsedSeconds = 0;
-          set(timerRef, 0); // Reset Firebase timer
+          set(timerRef, 0);
+          displayTime(elapsedSeconds); // Fix: Update UI instantly after reset
         }
       
         startClock();
-      </script>
-      
+    </script>
 </body>
 </html>
+
